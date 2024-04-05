@@ -5,18 +5,14 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.Arguments.arguments
 import org.junit.jupiter.params.provider.MethodSource
-import java.io.FileReader
-import java.math.BigInteger
-import java.nio.charset.Charset
+import java.io.File
+import kotlin.math.ceil
 
 class TorrentMetaDataTest {
 
     companion object {
         @JvmStatic
         fun getTorrentFiles(): List<Arguments> {
-//            return File("src/test/testAssets/torrents/").walk().filter { it.isFile }.map {
-//                it.absolutePath
-//            }.toList()
             return listOf(
                 arguments(
                     "src/test/testAssets/torrents/big-buck-bunny.torrent",
@@ -66,7 +62,7 @@ class TorrentMetaDataTest {
     @MethodSource("getTorrentFiles")
     fun readTorrentFile(filePath: String, values: Map<String, Any>) {
         var result: TorrentMetaData
-        FileReader(filePath, Charset.forName("US-ASCII"))
+        File(filePath).inputStream()
             .use {
                 result = TorrentMetaData.from(it)
             }
@@ -75,7 +71,7 @@ class TorrentMetaDataTest {
         Assertions.assertEquals(values["isMultiFile"], result.isMultiFile())
         val totalSize = result.info.files.map { it.length }.reduce { a, b -> a + b }
         val expectedPieces =
-            (totalSize / result.info.pieceLength) + (if (totalSize % result.info.pieceLength > BigInteger.ZERO) BigInteger.ONE else BigInteger.ZERO)
-        Assertions.assertEquals(expectedPieces, result.info.pieces.count().toBigInteger())
+            ceil(totalSize.toFloat() / result.info.pieceLength).toInt()
+        Assertions.assertEquals(expectedPieces, result.info.pieces.count())
     }
 }

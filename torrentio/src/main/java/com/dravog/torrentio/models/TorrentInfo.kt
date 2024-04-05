@@ -3,12 +3,12 @@ package com.dravog.torrentio.models
 import java.math.BigInteger
 
 data class TorrentInfo(
-    val pieceLength: BigInteger,
-    val pieces: List<String>,//TODO - split and process
-    val private: BigInteger?,
+    val pieceLength: Long,
+    val pieces: List<ByteArray>,//TODO - split and process
+    val private: Long?,
     val name: String,
     //Single File mode
-    val length: BigInteger?,
+    val length: Long?,
     val md5sum: String?,
     //Multi File mode
     val files: List<TorrentFile> = listOf(),
@@ -20,21 +20,23 @@ data class TorrentInfo(
     companion object {
         fun from(map: Map<String, Any>): TorrentInfo {
             return TorrentInfo(
-                map["piece length"] as BigInteger,
-                pieces = splitPieces(map["pieces"] as String),
-                private = map.getOrDefault("private", BigInteger.ZERO) as BigInteger,
-                name = map["name"] as String,
-                length = map.getOrDefault("length", BigInteger.ZERO) as BigInteger,
-                md5sum = map.getOrDefault("md5sum", "") as String,
+                map["piece length"] as Long,
+                pieces = splitPieces(map["pieces"] as ByteArray),
+                private = map.getOrDefault("private", null) as Long?,
+                name = (map["name"] as ByteArray).decodeToString(),
+                length = map.getOrDefault("length", null) as Long?,
+                md5sum = (map.getOrDefault("md5sum", null) as ByteArray?)?.decodeToString(),
                 files = (map.getOrDefault(
                     "files",
                     listOf<Map<String, Any>>()
-                ) as List<Map<String, Any>>).map { TorrentFile.from(it) }
+                ) as Iterable<Map<String, Any>>).map { TorrentFile.from(it) }
             )
         }
 
-        private fun splitPieces(pieces: String): List<String> {
-            return pieces.chunked(20)
+        private fun splitPieces(pieces: ByteArray): List<ByteArray> {
+            return (1..(pieces.size / 20)).map {
+                pieces.sliceArray((20 * (it - 1))..<(20 * it))
+            }
         }
     }
 }

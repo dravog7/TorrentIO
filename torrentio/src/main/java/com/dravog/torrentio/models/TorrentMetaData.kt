@@ -1,37 +1,35 @@
 package com.dravog.torrentio.models
 
-import com.dravog.torrentio.utils.Bencode
-import java.io.Reader
-import java.math.BigInteger
+import com.dravog.torrentio.utils.BencodeReader
+import com.dravog.torrentio.utils.TypeCastHelpers.toList
+import java.io.InputStream
 
 data class TorrentMetaData(
     val info: TorrentInfo,
     val announce: String,
-    val announceList: List<String> = listOf(),
-    val creationDate: BigInteger?, //TODO - alternative
+    val announceList: List<String>?,
+    val creationDate: Long?, //TODO - alternative
     val comment: String?,
     val createdBy: String?,
     val encoding: String?
 ) {
     companion object {
-
-        fun from(file: Reader): TorrentMetaData {
-            return from(file.readText())
-        }
-
-        fun from(msg: String): TorrentMetaData {
-            val value = Bencode().decode(msg) as Map<String, Any>
+        fun from(stream: InputStream): TorrentMetaData {
+            val value = BencodeReader(stream).readAny() as Map<String, Any>
             return TorrentMetaData(
                 info = TorrentInfo.from(value["info"] as Map<String, Any>),
-                announce = value["announce"] as String,
+                announce = (value["announce"] as ByteArray).decodeToString(),
                 announceList = value.getOrDefault(
                     "announce-list",
-                    listOf<String>()
-                ) as List<String>,
-                creationDate = value.getOrDefault("creation date", null) as BigInteger?,
-                comment = value.getOrDefault("comment", null) as String?,
-                createdBy = value.getOrDefault("created by", null) as String?,
-                encoding = value.getOrDefault("encoding", null) as String?,
+                    null
+                )?.toList<ByteArray>()?.map { it.decodeToString() },
+                creationDate = value.getOrDefault("creation date", null) as Long?,
+                comment = (value.getOrDefault("comment", null) as ByteArray?)?.decodeToString(),
+                createdBy = (value.getOrDefault(
+                    "created by",
+                    null
+                ) as ByteArray?)?.decodeToString(),
+                encoding = (value.getOrDefault("encoding", null) as ByteArray?)?.decodeToString(),
             )
         }
     }
