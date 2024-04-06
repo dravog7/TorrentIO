@@ -1,7 +1,7 @@
 package com.dravog.torrentio.models
 
-import com.dravog.torrentio.utils.BencodeReader
 import com.dravog.torrentio.utils.TypeCastHelpers.toList
+import com.dravog.torrentio.utils.bencode.BencodeReader
 import java.io.InputStream
 
 data class TorrentMetaData(

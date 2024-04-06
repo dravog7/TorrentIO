@@ -1,5 +1,6 @@
-package com.dravog.torrentio.utils
+package com.dravog.torrentio.utils.bencode
 
+import com.dravog.torrentio.enums.BencodeType
 import java.io.InputStream
 import java.io.PushbackInputStream
 import java.io.UnsupportedEncodingException

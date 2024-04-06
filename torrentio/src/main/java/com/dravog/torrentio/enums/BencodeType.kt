@@ -1,4 +1,4 @@
-package com.dravog.torrentio.utils
+package com.dravog.torrentio.enums
 
 enum class BencodeType {
     STRING,
