@@ -13,7 +13,7 @@ class BencodeReaderTest {
         @JvmStatic
         fun getIntegerTestcases(): List<Arguments> {
             return listOf(
-                Arguments.arguments("i0e", 0),
+                Arguments.arguments("i0e", 0L),
                 Arguments.arguments("i12345e", 12345L),
                 Arguments.arguments("i-95434e", -95434L),
             )

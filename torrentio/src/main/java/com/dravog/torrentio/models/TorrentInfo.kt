@@ -1,6 +1,8 @@
 package com.dravog.torrentio.models
 
 import com.dravog.torrentio.utils.HelperExtensions.getAs
+import com.dravog.torrentio.utils.bencode.BencodeWriter
+import java.io.ByteArrayOutputStream
 import java.security.MessageDigest
 
 data class TorrentInfo(
@@ -13,17 +15,21 @@ data class TorrentInfo(
     val md5sum: String?,
     //Multi File mode
     val files: List<TorrentFile> = listOf(),
-
     ) {
+
+    private var readMap: Map<String, Any> = mapOf()
+
     constructor(map: Map<String, Any>) : this(
         (map[PIECE_LENGTH] as Long),
         pieces = splitPieces(map[PIECES] as ByteArray),
         private = map.getAs<Long?>(PRIVATE, null)?.toLong(),
-        name = map[NAME] as String,
+        name = (map[NAME] as ByteArray).decodeToString(),
         length = map.getAs<Long?>(LENGTH, null)?.toLong(),
         md5sum = map.getAs<String?>(MD5SUM, null),
         files = (map.getAs(FILES, listOf<Map<String, Any>>())).map { TorrentFile(it) },
-    )
+    ) {
+        readMap = map
+    }
 
     fun isMultiFile(): Boolean {
         return length?.equals(0L) ?: true
@@ -32,22 +38,9 @@ data class TorrentInfo(
     @OptIn(ExperimentalStdlibApi::class)
     fun toSha1Hash(): String {
         val digest = MessageDigest.getInstance("SHA-1")
-        return digest.digest(Bencode().encode(getMap()).toByteArray()).toHexString()
-    }
-
-    fun getMap(): Map<String, Any> {
-        val mapping = mutableMapOf<String, Any>()
-        mapping[PIECE_LENGTH] = pieceLength
-        mapping[PIECES] = pieces
-        if (private != null)
-            mapping[PRIVATE] = private
-        mapping[NAME] = name
-        if (length != null)
-            mapping[LENGTH] = length
-        if (md5sum != null)
-            mapping[MD5SUM] = md5sum
-        mapping[FILES] = files.map { it.getMap() }
-        return mapping
+        val stream = ByteArrayOutputStream()
+        BencodeWriter(stream).writeMap(readMap)
+        return digest.digest(stream.toByteArray()).toHexString()
     }
 
     companion object {
