@@ -21,5 +21,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "TorrentIO"
-include(":app")
 include(":torrentio")
